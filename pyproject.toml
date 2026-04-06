@@ -35,7 +35,7 @@ requires = [
     "setuptools_scm",
     "toml", 
     "wheel", 
-    "tts-utilities~=0.2.1"
+    "tts-utilities>=0.2.1,<1.0.0"
     ]
 build-backend = "setuptools.build_meta"
 
