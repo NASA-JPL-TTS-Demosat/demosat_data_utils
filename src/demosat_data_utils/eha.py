@@ -60,6 +60,65 @@ class DemosatChannelFrame(AmpcsEhaFrame):
 
     ROW_SERIES_CLASS = DemosatChannelRowSeries
 
+    def lad(self, value=None, *, label_col=None, time_col=None):
+        """Return latest-available-data per channel with deterministic missing-time handling.
+
+        Selects the latest row per ``label_col`` using ``time_col``.  Rows with
+        missing/unusable ``time_col`` are ignored for max selection; if a group
+        has no usable times, the last row in that group is returned to keep the
+        result deterministic.  The method always returns a
+        :class:`DemosatChannelFrame`.
+        """
+        label_col = label_col or self.LABEL_COL
+        time_col = time_col or self.DEFAULT_TIME_LABEL
+
+        if label_col is None:
+            raise ValueError("LABEL_COL/label_col must be configured to use lad().")
+
+        if value is None:
+            if label_col not in self.columns or time_col not in self.columns:
+                return self.__class__(self.copy(), coerce=False, validate=False)
+
+            def pick_latest(group: pd.DataFrame) -> pd.Series:
+                valid_mask = group[time_col].notna()
+                if valid_mask.any():
+                    # Choose the row with the maximum time among valid rows
+                    valid_group = group[valid_mask]
+                    idx = valid_group[time_col].idxmax()
+                    return group.loc[idx]
+                # No usable time values: fall back to the last row in the group
+                # to provide deterministic behavior
+                return group.iloc[-1]
+
+            # group_keys=False keeps a flat index; reset_index restores label column
+            result_df = (
+                self.groupby(label_col, group_keys=False)
+                .apply(pick_latest)
+                .reset_index()
+            )
+            # Ensure we return a DataFrame
+            if isinstance(result_df, pd.Series):
+                result_df = result_df.to_frame().T
+            return self.__class__(result_df, coerce=False, validate=False)
+
+        # value-specific path: latest row for a single label
+        if label_col not in self.columns:
+            raise ValueError(f"Label column {label_col!r} not present in frame.")
+        df = self[self[label_col] == value]
+        if df.empty:
+            raise KeyError(f"Label {value!r} not found in {label_col!r}.")
+        if time_col is not None and time_col in df.columns:
+            valid = df[time_col].notna()
+            if valid.any():
+                idx = df.loc[valid, time_col].idxmax()
+                row = df.loc[idx]
+            else:
+                row = df.iloc[-1]
+        else:
+            row = df.iloc[-1]
+        # Return a single-row frame to preserve type
+        return self.__class__(row.to_frame().T, coerce=False, validate=False)
+
     # Demosat uses year-day-of-year timestamps like 2024-033T00:00:00.000000
     TIME_FORMATS = {
         "scet": "%Y-%jT%H:%M:%S.%f",
