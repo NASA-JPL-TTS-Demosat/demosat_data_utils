@@ -1,12 +1,5 @@
 #Python Imports
-import pdb
-from abc import ABC, abstractmethod
-from datetime import datetime
-
 import pandas as pd
-
-#JPL Imports
-from jpl_time import Time
 
 #This Library Imports
 from tts_data_utils.core.log import TtsLogRowSeries
@@ -30,7 +23,7 @@ EVR_LEVEL_COLORS = {
 class EvrItem(CoreEvrItem):
     NAME = 'EVR'
     @property
-    def default_html_row_style(self):
+    def default_html_row_style(self) -> dict:
         """
         Returns the CSS style dictionary corresponding to the EVR's severity level.
         
@@ -79,7 +72,21 @@ class DemosatEvrFrame(AmpcsEvrFrame):
     }
 
     @classmethod
-    def _read_csv_to_df(cls, filepath, *args, **kwargs):
+    def _read_csv_to_df(cls, filepath: str, *args, **kwargs) -> pd.DataFrame:
+        """Read CSV and coerce Demosat day-of-year timestamps.
+
+        Parameters
+        ----------
+        filepath: str
+            Path to the CSV file.
+        *args, **kwargs
+            Passed through to :func:`pandas.read_csv`.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with ``scet``, ``ert``, ``rct`` and ``lst`` parsed as datetimes.
+        """
         df = pd.read_csv(filepath, *args, **kwargs)
         for col in ("scet", "ert", "rct", "lst"):
             if col in df.columns:

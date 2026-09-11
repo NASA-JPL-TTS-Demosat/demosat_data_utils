@@ -1,6 +1,7 @@
 import unittest
 import os
 import pandas as pd
+import pytest
 
 from demosat_data_utils.evr import DemosatEvrFrame, DemosatEvrRowSeries, EVR_LEVEL_COLORS, EvrItem, EvrContainer
 from tts_data_utils.core.data_frame import TtsDataFrame
@@ -14,6 +15,7 @@ def _load_fixture():
     return None
 
 
+@pytest.mark.unreviewed_ai
 class TestDemosatEvrFrame(unittest.TestCase):
     def test_construction_from_records(self):
         records = [

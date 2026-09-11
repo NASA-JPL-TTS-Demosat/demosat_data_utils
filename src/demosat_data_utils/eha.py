@@ -69,7 +69,21 @@ class DemosatChannelFrame(AmpcsEhaFrame):
     }
 
     @classmethod
-    def _read_csv_to_df(cls, filepath, *args, **kwargs):
+    def _read_csv_to_df(cls, filepath: str, *args, **kwargs) -> pd.DataFrame:
+        """Read CSV and coerce Demosat day-of-year timestamps.
+
+        Parameters
+        ----------
+        filepath: str
+            Path to the CSV file.
+        *args, **kwargs
+            Passed through to :func:`pandas.read_csv`.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with ``scet``, ``ert``, ``rct`` and ``lst`` parsed as datetimes.
+        """
         # Parse CSV and coerce Demosat day-of-year timestamps
         df = pd.read_csv(filepath, *args, **kwargs)
         for col in ("scet", "ert", "rct", "lst"):

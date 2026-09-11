@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 import pandas as pd
 import os
+import pytest
 
 from demosat_data_utils.eha import DemosatChannelFrame, DemosatChannelRowSeries
 from tts_data_utils.core.data_frame import TtsDataFrame
@@ -17,6 +18,7 @@ def _load_fixture():
     return None
 
 
+@pytest.mark.unreviewed_ai
 class TestDemosatChannelFrame(unittest.TestCase):
     def test_construction_from_records(self):
         records = [
