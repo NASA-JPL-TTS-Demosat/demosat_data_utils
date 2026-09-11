@@ -8,7 +8,7 @@ See Also
 tts_data_utils.multimission.ampcs.eha : shared AMPCS EHA frame
 """
 
-from typing import Dict
+from typing import Dict, Optional
 
 import pandas as pd
 
@@ -60,7 +60,7 @@ class DemosatChannelFrame(AmpcsEhaFrame):
 
     ROW_SERIES_CLASS = DemosatChannelRowSeries
 
-    def lad(self, value=None, *, label_col=None, time_col=None):
+    def lad(self, value: Optional[object] = None, *, label_col: Optional[str] = None, time_col: Optional[str] = None) -> "DemosatChannelFrame":
         """Return latest-available-data per channel with deterministic missing-time handling.
 
         Selects the latest row per ``label_col`` using ``time_col``.  Rows with

@@ -1,4 +1,5 @@
 #Python Imports
+from typing import Dict
 import pandas as pd
 
 #This Library Imports
@@ -21,9 +22,11 @@ EVR_LEVEL_COLORS = {
 
 
 class EvrItem(CoreEvrItem):
+    """Legacy Demosat EVR item with mission-specific level styling."""
+
     NAME = 'EVR'
     @property
-    def default_html_row_style(self) -> dict:
+    def default_html_row_style(self) -> Dict:
         """
         Returns the CSS style dictionary corresponding to the EVR's severity level.
         
@@ -34,6 +37,8 @@ class EvrItem(CoreEvrItem):
 
 
 class EvrContainer(CoreEvrContainer):
+    """Legacy Demosat EVR container preserving existing level vocabulary."""
+
     DATA_ITEM_CLS = EvrItem
     LEVELS = ['DIAGNOSTIC', 'COMMAND', 'ACTIVITY_LO', 'ACTIVITY_HI', 'WARNING_LO', 'WARNING_HI', 'FATAL', 'SIM_ERROR']
 
