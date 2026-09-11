@@ -3,6 +3,8 @@ import pdb
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+import pandas as pd
+
 #JPL Imports
 from jpl_time import Time
 
@@ -67,6 +69,22 @@ class DemosatEvrFrame(AmpcsEvrFrame):
     """
 
     ROW_SERIES_CLASS = DemosatEvrRowSeries
+
+    # Demosat uses year-day-of-year timestamps like 2024-033T00:00:00.000000
+    TIME_FORMATS = {
+        "scet": "%Y-%jT%H:%M:%S.%f",
+        "ert": "%Y-%jT%H:%M:%S.%f",
+        "rct": "%Y-%jT%H:%M:%S.%f",
+        "lst": "%Y-%jT%H:%M:%S.%f",
+    }
+
+    @classmethod
+    def _read_csv_to_df(cls, filepath, *args, **kwargs):
+        df = pd.read_csv(filepath, *args, **kwargs)
+        for col in ("scet", "ert", "rct", "lst"):
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format="%Y-%jT%H:%M:%S.%f", errors="coerce")
+        return df
 
     LEVELS = [
         'DIAGNOSTIC',
