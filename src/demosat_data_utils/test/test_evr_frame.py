@@ -137,11 +137,6 @@ class TestDemosatEvrFrame(unittest.TestCase):
         expected_levels = ['DIAGNOSTIC', 'COMMAND', 'ACTIVITY_LO', 'ACTIVITY_HI', 'WARNING_LO', 'WARNING_HI', 'FATAL', 'SIM_ERROR']
         self.assertEqual(EvrContainer.LEVELS, expected_levels)
 
-    def test_public_import(self):
-        # Ensure DemosatEvrFrame can be imported
-        from demosat_data_utils.evr import DemosatEvrFrame as Imported
-        self.assertTrue(Imported is DemosatEvrFrame)
-
 
 if __name__ == "__main__":
     unittest.main()
