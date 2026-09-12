@@ -114,3 +114,12 @@ class DemosatEvrFrame(AmpcsEvrFrame):
         'module': None,
         'name': None,
     }
+
+
+__all__ = [
+    "DemosatEvrFrame",
+    "DemosatEvrRowSeries",
+    "EvrItem",
+    "EvrContainer",
+    "EVR_LEVEL_COLORS",
+]

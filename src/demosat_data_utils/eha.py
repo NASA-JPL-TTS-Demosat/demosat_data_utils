@@ -167,3 +167,9 @@ class DemosatChannelFrame(AmpcsEhaFrame):
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format="%Y-%jT%H:%M:%S.%f", errors="coerce")
         return df
+
+
+__all__ = [
+    "DemosatChannelFrame",
+    "DemosatChannelRowSeries",
+]
