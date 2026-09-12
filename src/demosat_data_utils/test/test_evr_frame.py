@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from demosat_data_utils.evr import DemosatEvrFrame, DemosatEvrRowSeries, EVR_LEVEL_COLORS, EvrItem, EvrContainer
+from demosat_data_utils.evr import DemosatEvrFrame, EVR_LEVEL_COLORS, EvrItem, EvrContainer
 from tts_data_utils.core.data_frame import TtsDataFrame
 from tts_html_utils.core.palette import EvrPalette
 
