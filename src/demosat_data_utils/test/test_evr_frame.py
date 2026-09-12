@@ -5,6 +5,7 @@ import pytest
 
 from demosat_data_utils.evr import DemosatEvrFrame, DemosatEvrRowSeries, EVR_LEVEL_COLORS, EvrItem, EvrContainer
 from tts_data_utils.core.data_frame import TtsDataFrame
+from tts_html_utils.core.palette import EvrPalette
 
 _SIM_EVR_PATH = "/home/agent/context/github_com_NASA-JPL-TTS-Demosat_demosat_seq/examples/sim_outputs/simulated_evrs.csv"
 
@@ -68,6 +69,7 @@ class TestDemosatEvrFrame(unittest.TestCase):
             self.skipTest("Fixture not available")
         df = DemosatEvrFrame(csv_path=path, coerce=True)
         self.assertIsInstance(df, DemosatEvrFrame)
+        self.assertIsInstance(df, TtsDataFrame)
         expected_cols = [
             "recordType", "sessionId", "sessionHost", "name", "module", "level",
             "eventId", "vcid", "dssId", "fromSse", "realtime", "sclk", "scet",
@@ -76,6 +78,10 @@ class TestDemosatEvrFrame(unittest.TestCase):
         for col in expected_cols:
             self.assertIn(col, df.columns)
         self.assertTrue(pd.api.types.is_datetime64_any_dtype(df["scet"]))
+        # Verify label/value/time semantics
+        self.assertEqual(df.LABEL_COL, "name")
+        self.assertEqual(df.VALUE_COL, "message")
+        self.assertEqual(df.DEFAULT_TIME_LABEL, "scet")
 
     def test_levels_and_styling(self):
         records = [
@@ -90,8 +96,14 @@ class TestDemosatEvrFrame(unittest.TestCase):
             style = row.default_html_row_style
             # Should have style for known levels
             self.assertTrue(style, f"No style for level {row['level']}")
-            # Unknown level fallback
-        # Test unknown level
+            # EvrPalette-based styling for standard levels
+            lvl = row['level']
+            if lvl != "SIM_ERROR":
+                self.assertEqual(style, EvrPalette[lvl], f"Style mismatch for level {lvl}")
+            else:
+                # SIM_ERROR uses local palette
+                self.assertEqual(style, EVR_LEVEL_COLORS[lvl])
+        # Test unknown level fallback safely
         df_unknown = DemosatEvrFrame([{"name": "X", "message": "m", "level": "UNKNOWN", "scet": "2024-001T00:00:00.000000"}])
         style_unknown = df_unknown.iloc[0].default_html_row_style
         self.assertEqual(style_unknown, {})
@@ -109,6 +121,7 @@ class TestDemosatEvrFrame(unittest.TestCase):
         self.assertEqual(filtered.iloc[0]["name"], "A")
         # Multiple levels
         filtered2 = df.filter_level(["FATAL", "WARNING_LO"])
+        self.assertIsInstance(filtered2, DemosatEvrFrame)
         self.assertEqual(len(filtered2), 2)
         # Order preserved
         self.assertEqual(list(filtered2["name"]), ["A", "C"])
@@ -120,6 +133,9 @@ class TestDemosatEvrFrame(unittest.TestCase):
         # Instantiation requires full fields; just verify class attributes
         self.assertEqual(EvrItem.NAME, 'EVR')
         self.assertEqual(EvrContainer.DATA_ITEM_CLS, EvrItem)
+        # Levels remain unchanged
+        expected_levels = ['DIAGNOSTIC', 'COMMAND', 'ACTIVITY_LO', 'ACTIVITY_HI', 'WARNING_LO', 'WARNING_HI', 'FATAL', 'SIM_ERROR']
+        self.assertEqual(EvrContainer.LEVELS, expected_levels)
 
     def test_public_import(self):
         # Ensure DemosatEvrFrame can be imported
