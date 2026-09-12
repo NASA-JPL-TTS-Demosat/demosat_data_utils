@@ -78,28 +78,40 @@ class DemosatChannelFrame(AmpcsEhaFrame):
         if label_col is None:
             raise ValueError("LABEL_COL/label_col must be configured to use lad().")
 
+        # Helper to parse times with TIME_FORMATS for robustness
+        def parse_times(series: pd.Series) -> pd.Series:
+            fmt = getattr(self, "TIME_FORMATS", {}).get(time_col)
+            if fmt:
+                if isinstance(fmt, (list, tuple)):
+                    fmt = fmt[0]
+                try:
+                    return pd.to_datetime(series, format=fmt, errors="coerce")
+                except Exception:
+                    return pd.to_datetime(series, errors="coerce")
+            return pd.to_datetime(series, errors="coerce")
+
         if value is None:
             if label_col not in self.columns or time_col not in self.columns:
                 return self.__class__(self.copy(), coerce=False, validate=False)
 
             def pick_latest(group: pd.DataFrame) -> pd.Series:
-                valid_mask = group[time_col].notna()
+                parsed = parse_times(group[time_col])
+                valid_mask = parsed.notna()
                 if valid_mask.any():
-                    # Choose the row with the maximum time among valid rows
-                    valid_group = group[valid_mask]
-                    idx = valid_group[time_col].idxmax()
+                    max_time = parsed[valid_mask].max()
+                    candidates_mask = valid_mask & (parsed == max_time)
+                    candidates = group[candidates_mask]
+                    # Deterministic tie-break: pick last candidate by original index
+                    idx = candidates.index[-1]
                     return group.loc[idx]
                 # No usable time values: fall back to the last row in the group
-                # to provide deterministic behavior
                 return group.iloc[-1]
 
-            # group_keys=False keeps a flat index; reset_index restores label column
             result_df = (
                 self.groupby(label_col, group_keys=False)
                 .apply(pick_latest)
                 .reset_index()
             )
-            # Ensure we return a DataFrame
             if isinstance(result_df, pd.Series):
                 result_df = result_df.to_frame().T
             return self.__class__(result_df, coerce=False, validate=False)
@@ -111,15 +123,18 @@ class DemosatChannelFrame(AmpcsEhaFrame):
         if df.empty:
             raise KeyError(f"Label {value!r} not found in {label_col!r}.")
         if time_col is not None and time_col in df.columns:
-            valid = df[time_col].notna()
-            if valid.any():
-                idx = df.loc[valid, time_col].idxmax()
+            parsed = parse_times(df[time_col])
+            valid_mask = parsed.notna()
+            if valid_mask.any():
+                max_time = parsed[valid_mask].max()
+                candidates_mask = valid_mask & (parsed == max_time)
+                candidates = df[candidates_mask]
+                idx = candidates.index[-1]
                 row = df.loc[idx]
             else:
                 row = df.iloc[-1]
         else:
             row = df.iloc[-1]
-        # Return a single-row frame to preserve type
         return self.__class__(row.to_frame().T, coerce=False, validate=False)
 
     # Demosat uses year-day-of-year timestamps like 2024-033T00:00:00.000000
