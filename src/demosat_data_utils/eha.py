@@ -59,6 +59,9 @@ class DemosatChannelFrame(AmpcsEhaFrame):
     """
 
     ROW_SERIES_CLASS = DemosatChannelRowSeries
+    LABEL_COL = "channelId"
+    VALUE_COL = "eu"
+    DEFAULT_TIME_LABEL = "scet"
 
     def lad(self, value: Optional[object] = None, *, label_col: Optional[str] = None, time_col: Optional[str] = None) -> "DemosatChannelFrame":
         """Return latest-available-data per channel with deterministic missing-time handling.
