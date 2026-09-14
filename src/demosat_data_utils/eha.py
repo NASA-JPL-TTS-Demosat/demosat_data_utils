@@ -71,6 +71,21 @@ class DemosatChannelFrame(AmpcsEhaFrame):
         has no usable times, the last row in that group is returned to keep the
         result deterministic.  The method always returns a
         :class:`DemosatChannelFrame`.
+
+        Parameters
+        ----------
+        value : Optional[object]
+            If provided, return the latest row for the specified label value.
+            If None, return latest row per label for the entire frame.
+        label_col : Optional[str]
+            Column to group by. Defaults to ``LABEL_COL``.
+        time_col : Optional[str]
+            Column to use for time comparison. Defaults to ``DEFAULT_TIME_LABEL``.
+
+        Returns
+        -------
+        DemosatChannelFrame
+            Frame containing latest rows.
         """
         label_col = label_col or self.LABEL_COL
         time_col = time_col or self.DEFAULT_TIME_LABEL
@@ -163,9 +178,9 @@ class DemosatChannelFrame(AmpcsEhaFrame):
         """
         # Parse CSV and coerce Demosat day-of-year timestamps
         df = pd.read_csv(filepath, *args, **kwargs)
-        for col in ("scet", "ert", "rct", "lst"):
+        for col, fmt in cls.TIME_FORMATS.items():
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], format="%Y-%jT%H:%M:%S.%f", errors="coerce")
+                df[col] = pd.to_datetime(df[col], format=fmt, errors="coerce")
         return df
 
 
