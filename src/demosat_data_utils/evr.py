@@ -1,10 +1,6 @@
 #Python Imports
-import pdb
-from abc import ABC, abstractmethod
-from datetime import datetime
-
-#JPL Imports
-from jpl_time import Time
+from typing import Dict
+import pandas as pd
 
 #This Library Imports
 from tts_data_utils.core.log import TtsLogRowSeries
@@ -26,9 +22,11 @@ EVR_LEVEL_COLORS = {
 
 
 class EvrItem(CoreEvrItem):
+    """Legacy Demosat EVR item with mission-specific level styling."""
+
     NAME = 'EVR'
     @property
-    def default_html_row_style(self):
+    def default_html_row_style(self) -> Dict:
         """
         Returns the CSS style dictionary corresponding to the EVR's severity level.
         
@@ -39,6 +37,8 @@ class EvrItem(CoreEvrItem):
 
 
 class EvrContainer(CoreEvrContainer):
+    """Legacy Demosat EVR container preserving existing level vocabulary."""
+
     DATA_ITEM_CLS = EvrItem
     LEVELS = ['DIAGNOSTIC', 'COMMAND', 'ACTIVITY_LO', 'ACTIVITY_HI', 'WARNING_LO', 'WARNING_HI', 'FATAL', 'SIM_ERROR']
 
@@ -68,6 +68,36 @@ class DemosatEvrFrame(AmpcsEvrFrame):
 
     ROW_SERIES_CLASS = DemosatEvrRowSeries
 
+    # Demosat uses year-day-of-year timestamps like 2024-033T00:00:00.000000
+    TIME_FORMATS = {
+        "scet": "%Y-%jT%H:%M:%S.%f",
+        "ert": "%Y-%jT%H:%M:%S.%f",
+        "rct": "%Y-%jT%H:%M:%S.%f",
+        "lst": "%Y-%jT%H:%M:%S.%f",
+    }
+
+    @classmethod
+    def _read_csv_to_df(cls, filepath: str, *args, **kwargs) -> pd.DataFrame:
+        """Read CSV and coerce Demosat day-of-year timestamps.
+
+        Parameters
+        ----------
+        filepath: str
+            Path to the CSV file.
+        *args, **kwargs
+            Passed through to :func:`pandas.read_csv`.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with ``scet``, ``ert``, ``rct`` and ``lst`` parsed as datetimes.
+        """
+        df = pd.read_csv(filepath, *args, **kwargs)
+        for col in ("scet", "ert", "rct", "lst"):
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format="%Y-%jT%H:%M:%S.%f", errors="coerce")
+        return df
+
     LEVELS = [
         'DIAGNOSTIC',
         'COMMAND',
@@ -84,3 +114,12 @@ class DemosatEvrFrame(AmpcsEvrFrame):
         'module': None,
         'name': None,
     }
+
+
+__all__ = [
+    "DemosatEvrFrame",
+    "DemosatEvrRowSeries",
+    "EvrItem",
+    "EvrContainer",
+    "EVR_LEVEL_COLORS",
+]
